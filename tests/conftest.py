@@ -43,7 +43,7 @@ def setup_test_database():
 def limpar_rate_limiter():
     """Limpa o rate limiter antes de cada teste para evitar bloqueios"""
     # Importar após configuração do banco de dados
-    from routes.auth_routes import login_limiter, cadastro_limiter, esqueci_senha_limiter
+    from routes.auth_routes import login_limiter, esqueci_senha_limiter
     from routes.admin_usuarios_routes import admin_usuarios_limiter
     from routes.admin_backups_routes import admin_backups_limiter, backup_download_limiter
     from routes.admin_configuracoes_routes import admin_config_limiter
@@ -57,7 +57,6 @@ def limpar_rate_limiter():
     # Lista de todos os limiters
     limiters = [
         login_limiter,
-        cadastro_limiter,
         esqueci_senha_limiter,
         admin_usuarios_limiter,
         admin_backups_limiter,

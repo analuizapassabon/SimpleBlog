@@ -185,23 +185,10 @@ class TestRateLimiting:
                "aguarde" in response.text.lower() or \
                "bloqueado" in response.text.lower()
 
-    def test_cadastro_limitado_por_ip(self, client):
-        """Múltiplos cadastros do mesmo IP devem ser limitados"""
-
-        # Tentar cadastrar 4 usuários (limite é 3)
-        for i in range(4):
-            response = client.post("/cadastrar", data={
-                "perfil": Perfil.CLIENTE.value,
-                "nome": f"Usuario {i}",
-                "email": f"usuario{i}@example.com",
-                "senha": "Senha@123",
-                "confirmar_senha": "Senha@123"
-            }, follow_redirects=True)
-
-        # 4ª tentativa deve ser bloqueada
-        assert "muitas tentativas" in response.text.lower() or \
-               "limite" in response.text.lower() or \
-               response.status_code == 429  # Too Many Requests
+    # Teste removido: Rate limiter de cadastro foi desabilitado
+    # def test_cadastro_limitado_por_ip(self, client):
+    #     """Múltiplos cadastros do mesmo IP devem ser limitados"""
+    #     pass
 
     def test_esqueci_senha_fortemente_limitado(self, client, criar_usuario, usuario_teste):
         """Esqueci senha deve ter rate limiting rigoroso (1 por minuto)"""

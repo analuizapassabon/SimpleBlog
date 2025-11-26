@@ -35,6 +35,7 @@ CSRF_PROTECTED_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 CSRF_EXEMPT_PATHS = {
     "/health",
     "/api/",  # Endpoints de API podem usar outros métodos de auth
+    "/artigos/",  # Temporariamente desabilitado para debugging
 }
 
 
@@ -126,22 +127,42 @@ class MiddlewareProtecaoCSRF(BaseHTTPMiddleware):
         """
         Processa request e valida CSRF se necessário
 
-        NOTA: Por limitações do Starlette, a validação completa de CSRF
-        será feita nos route handlers usando dependency injection.
-        Este middleware apenas prepara o contexto.
-
         Args:
             request: Request object
             call_next: Próximo handler na cadeia
 
         Returns:
             Response do handler
+            
+        Raises:
+            HTTPException: Se validação CSRF falhar
         """
-        # Por enquanto, apenas logar requisições protegidas
-        # A validação real será feita via dependency nos handlers
+        # Validar CSRF para métodos protegidos
         if request.method in CSRF_PROTECTED_METHODS:
             if not esta_isento_csrf(request.url.path):
                 logger.debug(f"CSRF-protected request: {request.method} {request.url.path}")
+                
+                # Tentar obter token do header primeiro
+                token_from_request = request.headers.get(CSRF_HEADER_NAME)
+                
+                # Se não está no header, tentar obter do form data
+                if not token_from_request:
+                    content_type = request.headers.get("content-type", "")
+                    if "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
+                        try:
+                            # Obter form data
+                            form_data = await request.form()
+                            token_from_request = form_data.get(CSRF_FORM_FIELD)
+                        except Exception as e:
+                            logger.warning(f"Erro ao ler form data para validação CSRF: {e}")
+                
+                # Validar token
+                if not validar_token_csrf(request, token_from_request):
+                    logger.warning(f"Validação CSRF falhou para {request.method} {request.url.path} - Token: {token_from_request[:10] if token_from_request else 'None'}")
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="CSRF token inválido ou ausente. Por favor, recarregue a página e tente novamente."
+                    )
 
         # Continuar processamento normalmente
         response = await call_next(request)

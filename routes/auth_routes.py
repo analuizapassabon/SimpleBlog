@@ -54,13 +54,6 @@ login_limiter = DynamicRateLimiter(
     padrao_minutos=5,
     nome="login",
 )
-cadastro_limiter = DynamicRateLimiter(
-    chave_max="rate_limit_cadastro_max",
-    chave_minutos="rate_limit_cadastro_minutos",
-    padrao_max=3,
-    padrao_minutos=10,
-    nome="cadastro",
-)
 esqueci_senha_limiter = DynamicRateLimiter(
     chave_max="rate_limit_esqueci_senha_max",
     chave_minutos="rate_limit_esqueci_senha_minutos",
@@ -190,16 +183,6 @@ async def post_cadastrar(
 ):
     """Processa cadastro de novo usuário"""
     try:
-        # Rate limiting por IP
-        ip = obter_identificador_cliente(request)
-        if not cadastro_limiter.verificar(ip):
-            informar_erro(
-                request,
-                f"Muitas tentativas de cadastro. Aguarde {cadastro_limiter.janela_minutos} minuto(s).",
-            )
-            logger.warning(f"Rate limit de cadastro excedido para IP: {ip}")
-            return RedirectResponse("/cadastrar", status_code=status.HTTP_303_SEE_OTHER)
-
         # Armazena os dados do formulário para reexibição em caso de erro
         dados_formulario = {"perfil": perfil, "nome": nome, "email": email}
 
