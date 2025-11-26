@@ -28,6 +28,7 @@
 
         <div class="card shadow-sm">
             <form method="POST" action="/artigos/editar/{{ artigo.id }}" id="formArtigo">
+                {{csrf_input()}}
                 {{ csrf_input(request) | safe }}
                 <div class="card-body p-4">
                     <div class="row">
